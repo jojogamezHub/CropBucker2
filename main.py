@@ -1,39 +1,36 @@
-import json
-import logging
-import random
-import time
-from datetime import date, timedelta
-
-import requests
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.common.by import By
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+import time
 
-class Searches:
-    def __init__(self, browser):
-        self.browser = browser
-        self.webdriver = browser.webdriver
+class SwagbucksBot:
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+        self.driver = webdriver.Chrome()  # Make sure to use the appropriate webdriver for your browser
 
-    def getGoogleTrends(self, wordsCount):
-        searchTerms = []
-        i = 0
-        while len(searchTerms) < wordsCount:
-            i += 1
-            r = requests.get(
-                f'https://trends.google.com/trends/api/dailytrends?hl={self.browser.localeLang}&ed={(date.today() - timedelta(days=i)).strftime("%Y%m%d")}&geo={self.browser.localeGeo}&ns=15'
-            )
-            trends = json.loads(r.text[6:])
-            for topic in trends["default"]["trendingSearchesDays"][0]["trendingSearches"]:
-                searchTerms.append(topic["title"]["query"].lower())
-                searchTerms.extend(
-                    relatedTopic["query"].lower()
-                    for relatedTopic in topic["relatedQueries"]
-                )
-            searchTerms = list(set(searchTerms))
-        del searchTerms[wordsCount : (len(searchTerms) + 1)]
-        return searchTerms
+    def login(self):
+        self.driver.get("https://www.swagbucks.com/")
+        
+        # Find and click the login button
+        login_button = self.driver.find_element(By.CLASS_NAME, "login")
+        login_button.click()
 
-    def swagbucksSearches(self, numberOfSearches=400):
+        # Enter username and password
+        username_input = self.driver.find_element(By.ID, "sbxJxMMd")
+        password_input = self.driver.find_element(By.ID, "sbxJxMMd")  # Replace with the actual ID of the password input field
+        username_input.send_keys(self.username)
+        password_input.send_keys(self.password)
+
+        # Submit the form
+        login_form = self.driver.find_element(By.ID, "login-form")  # Replace with the actual ID of the login form
+        login_form.submit()
+
+    def perform_searches(self, search_terms):
+        for term in search_terms:
+            self.swagbucks_search(term)
+            time.sleep(random.randint(10, 15))
+
+    def swagbucks_search(self, term):
         logging.info("[SWAGBUCKS] Starting Swagbucks searches...")
 
         i = 0
@@ -45,3 +42,22 @@ class Searches:
             time.sleep(random.randint(10, 15))
 
         logging.info("[SWAGBUCKS] Finished Swagbucks searches!")
+        pass
+
+    def close(self):
+        self.driver.quit()
+
+# Example usage:
+username = "your_username"
+password = "your_password"
+swagbucks_bot = SwagbucksBot(username, password)
+swagbucks_bot.login()
+
+# Get search terms
+search_terms = swagbucks_bot.get_google_trends(400)
+
+# Perform searches
+swagbucks_bot.perform_searches(search_terms)
+
+# Close the bot
+swagbucks_bot.close()

@@ -1,0 +1,6 @@
+requests
+selenium
+ipapi
+setuptools
+undetected-chromedriver
+selenium-wire
